@@ -465,16 +465,16 @@ const App: React.FC = () => {
             <p className="text-slate-500 max-w-sm mx-auto">Use o seletor no topo para visualizar seus dados.</p>
           </div>
         ) : (
-          <div className="space-y-4 animate-in fade-in duration-500">
+          <>
             {syncing && (
                <div className="fixed bottom-6 right-6 flex items-center py-3 px-5 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-2xl text-white text-sm font-semibold shadow-2xl z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
                   <i className="fas fa-circle-notch fa-spin mr-3 text-indigo-400"></i>
                   Sincronizando planilhas remotas...
                </div>
             )}
-
-            {/* Cards de Resumo sempre visíveis */}
-            <SummaryCards stats={stats} />
+            <div className="space-y-4 animate-in fade-in duration-500">
+              {/* Cards de Resumo sempre visíveis */}
+              <SummaryCards stats={stats} />
             
             {activeTab === 'graficos' ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -493,7 +493,8 @@ const App: React.FC = () => {
                 />
               </div>
             )}
-          </div>
+            </div>
+          </>
         )}
       </main>
 

@@ -133,32 +133,32 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-[#1c1c1e] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
         <form onSubmit={handleSubmit}>
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div className="p-6 border-b border-white/10 flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-slate-800">{editTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
-              <p className="text-sm text-slate-500">{editTransaction ? 'Ajuste os dados da transação' : 'Adicione um gasto ou ganho manual'}</p>
+              <h3 className="text-xl font-bold text-white">{editTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+              <p className="text-sm text-gray-400">{editTransaction ? 'Ajuste os dados da transação' : 'Adicione um gasto ou ganho manual'}</p>
             </div>
-            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2">
+            <button type="button" onClick={onClose} className="text-gray-400 hover:text-white p-2 transition-colors">
               <i className="fas fa-times text-xl"></i>
             </button>
           </div>
 
           <div className="p-6 space-y-4">
-            <div className="flex bg-slate-100 p-1 rounded-xl mb-2">
+            <div className="flex bg-[#252528] p-1 rounded-xl mb-2">
               <button 
                 type="button"
                 onClick={() => setType('expense')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'expense' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500'}`}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'expense' ? 'bg-rose-500/20 text-rose-400 shadow-sm' : 'text-gray-400 hover:text-white'}`}
               >
                 Saída
               </button>
               <button 
                 type="button"
                 onClick={() => setType('income')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'}`}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${type === 'income' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'text-gray-400 hover:text-white'}`}
               >
                 Entrada
               </button>
@@ -166,25 +166,25 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Data</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Data</label>
                 <input 
                   type="date" 
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                  className="w-full px-4 py-2.5 bg-[#252528] border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:outline-none [color-scheme:dark]"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fonte</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Fonte</label>
                 <select 
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none font-medium text-slate-700"
+                  className="w-full px-4 py-2.5 bg-[#252528] border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:outline-none font-medium"
                   value={sourceLabel}
                   onChange={(e) => setSourceLabel(e.target.value)}
-                  disabled={editTransaction && editTransaction.source !== 'manual'}
+                  disabled={!!editTransaction && editTransaction.source !== 'manual'}
                 >
                   {sourceOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt} value={opt} className="bg-[#252528]">{opt}</option>
                   ))}
                 </select>
               </div>
@@ -192,25 +192,25 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Parcelas</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Parcelas</label>
                 <input 
                   type="number" 
                   min="1"
                   max="48"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:opacity-50"
+                  className="w-full px-4 py-2.5 bg-[#252528] border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:outline-none disabled:opacity-50"
                   value={installments}
                   onChange={(e) => setInstallments(parseInt(e.target.value) || 1)}
                   disabled={!!editTransaction}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor Total (R$)</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Valor Total (R$)</label>
                 <input 
                   type="number" 
                   step="0.01"
                   placeholder="0,00"
                   required
-                  className={`w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}`}
+                  className={`w-full px-4 py-2.5 bg-[#252528] border border-white/10 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${type === 'expense' ? 'text-rose-400' : 'text-emerald-400'}`}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -218,19 +218,19 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Descrição</label>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Descrição</label>
               <input 
                 type="text" 
                 placeholder="Ex: Almoço no quilo, Pagamento João..."
                 required
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-[#252528] border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:outline-none placeholder-gray-500"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="p-6 border-t border-slate-100">
+          <div className="p-6 border-t border-white/10">
             <button 
               type="submit"
               className={`w-full py-4 text-white font-bold rounded-2xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${type === 'expense' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
