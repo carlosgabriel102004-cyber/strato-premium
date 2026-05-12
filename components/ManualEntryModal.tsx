@@ -93,7 +93,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
        const pDate = calculatePaymentDate(finalDString, sourceLabel);
        const newTx: Transaction = {
          id: editTransaction ? editTransaction.id : `manual-${Date.now()}`,
-         date: finalDString,
+         date: pDate,
          description: description,
          amount: finalTotalAmount,
          category: editTransaction?.category || 'Manual',
@@ -115,7 +115,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
           
           txs.push({
              id: `manual-${Date.now()}-${i}`,
-             date: installmentDateStr,
+             date: pDate,
              description: `${description} (${i + 1}/${installments})`,
              amount: i === installments - 1 ? finalTotalAmount - (amountPerParcel * (installments - 1)) : amountPerParcel, 
              category: 'Manual',

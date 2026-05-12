@@ -262,7 +262,7 @@ const App: React.FC = () => {
         
         result.push({
             id: `${source}-${dateStr}-${desc}-${amount}-${i}`,
-            date: dateStr,
+            date: paymentDate,
             amount: amount,
             description: desc,
             account: account,
@@ -467,8 +467,8 @@ const App: React.FC = () => {
         ) : (
           <div className="space-y-4 animate-in fade-in duration-500">
             {syncing && (
-               <div className="flex items-center justify-center py-3 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600 text-sm font-bold shadow-sm mb-4">
-                  <i className="fas fa-circle-notch fa-spin mr-3"></i>
+               <div className="fixed bottom-6 right-6 flex items-center py-3 px-5 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-2xl text-white text-sm font-semibold shadow-2xl z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                  <i className="fas fa-circle-notch fa-spin mr-3 text-indigo-400"></i>
                   Sincronizando planilhas remotas...
                </div>
             )}
