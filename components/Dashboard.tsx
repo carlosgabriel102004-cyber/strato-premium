@@ -214,7 +214,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                         <Cell key={`cell-exp-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip wrapperStyle={{ zIndex: 1000 }} content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -261,7 +261,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                         <Cell key={`cell-bal-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip wrapperStyle={{ zIndex: 1000 }} content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -341,7 +341,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                   tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 500 }}
                   tickFormatter={(val) => `R$ ${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip wrapperStyle={{ zIndex: 100 }} content={<CustomTooltip />} />
                 <Area 
                   type="monotone" 
                   dataKey="income" 

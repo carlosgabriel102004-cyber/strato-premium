@@ -50,14 +50,21 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
                  let month = parseInt(dateParts[1], 10);
                  let year = parseInt(dateParts[2], 10);
 
+                 let paymentMonth = month;
+                 let paymentYear = year;
+
                  if (day >= card.closingDay) {
-                     month += 1;
-                     if (month > 12) {
-                         month = 1;
-                         year += 1;
-                     }
+                     paymentMonth += 1;
                  }
-                 paymentDate = `${String(card.dueDay).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+                 if (card.dueDay < card.closingDay) {
+                     paymentMonth += 1;
+                 }
+                 
+                 while (paymentMonth > 12) {
+                     paymentMonth -= 12;
+                     paymentYear += 1;
+                 }
+                 paymentDate = `${String(card.dueDay).padStart(2, '0')}/${String(paymentMonth).padStart(2, '0')}/${paymentYear}`;
              }
          }
      }
