@@ -107,11 +107,16 @@ const App: React.FC = () => {
 
   // Cálculo de estatísticas globais para os SummaryCards
   const stats = useMemo(() => {
-    const isPix = (t: Transaction) => 
-      t.typeTag?.toLowerCase().includes('pix') || t.description?.toLowerCase().includes('pix');
+    const isCredit = (t: Transaction) => {
+      const sourceIndicator = `${t.source} ${t.typeTag} ${t.account} ${t.manualSourceLabel}`.toLowerCase();
+      return sourceIndicator.includes('cartão') || sourceIndicator.includes('cc');
+    };
     
-    const isCredit = (t: Transaction) => 
-      t.typeTag?.toLowerCase().includes('cartão') || t.account?.toLowerCase().includes('cartão');
+    const isPix = (t: Transaction) => {
+      if (isCredit(t)) return false; // Evita que cartões sejam contados como PIX
+      const pxIndicator = `${t.source} ${t.typeTag} ${t.description} ${t.account} ${t.manualSourceLabel}`.toLowerCase();
+      return pxIndicator.includes('pix');
+    };
 
     const income = activeTransactions.filter(t => t.type === 'income');
     const incomeTotal = income.reduce((sum, t) => sum + t.amount, 0);
@@ -456,6 +461,13 @@ const App: React.FC = () => {
       />
 
       <main className="flex-grow container mx-auto px-4 py-8 max-w-6xl pb-32">
+        {syncing && (
+           <div className="fixed bottom-6 right-6 flex items-center py-3 px-5 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-2xl text-white text-sm font-semibold shadow-2xl z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+              <i className="fas fa-circle-notch fa-spin mr-3 text-indigo-400"></i>
+              Sincronizando planilhas remotas...
+           </div>
+        )}
+        
         {selectedMonths.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-6">
             <div className="w-20 h-20 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 text-3xl">
@@ -465,16 +477,9 @@ const App: React.FC = () => {
             <p className="text-slate-500 max-w-sm mx-auto">Use o seletor no topo para visualizar seus dados.</p>
           </div>
         ) : (
-          <>
-            {syncing && (
-               <div className="fixed bottom-6 right-6 flex items-center py-3 px-5 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-2xl text-white text-sm font-semibold shadow-2xl z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                  <i className="fas fa-circle-notch fa-spin mr-3 text-indigo-400"></i>
-                  Sincronizando planilhas remotas...
-               </div>
-            )}
-            <div className="space-y-4 animate-in fade-in duration-500">
-              {/* Cards de Resumo sempre visíveis */}
-              <SummaryCards stats={stats} />
+          <div className="space-y-4">
+            {/* Cards de Resumo sempre visíveis */}
+            <SummaryCards stats={stats} />
             
             {activeTab === 'graficos' ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -493,8 +498,7 @@ const App: React.FC = () => {
                 />
               </div>
             )}
-            </div>
-          </>
+          </div>
         )}
       </main>
 
