@@ -206,23 +206,28 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
           </div>
           <div className="h-[250px] relative">
             {chartData.expenseSourceData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={chartData.expenseSourceData} cx="50%" cy="50%" innerRadius={65} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
-                    {chartData.expenseSourceData.map((entry, index) => (
-                      <Cell key={`cell-exp-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={chartData.expenseSourceData} cx="50%" cy="50%" innerRadius={65} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
+                      {chartData.expenseSourceData.map((entry, index) => (
+                        <Cell key={`cell-exp-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Saídas</span>
+                  <span className="text-lg font-light text-white">{formatCurrency(chartData.expensesTotal)}</span>
+                </div>
+              </>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-500 italic text-xs text-center px-4">Sem saídas no período</div>
+              <div className="h-full flex flex-col items-center justify-center text-gray-500 text-center px-4">
+                <i className="fas fa-chart-pie mb-3 text-3xl opacity-20 text-white"></i>
+                <span className="text-xs italic">Sem saídas no período</span>
+              </div>
             )}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Saídas</span>
-              <span className="text-lg font-light text-white">{formatCurrency(chartData.expensesTotal)}</span>
-            </div>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2">
             {chartData.expenseSourceData.map((entry, idx) => (
@@ -248,23 +253,28 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
           </div>
           <div className="h-[250px] relative">
             {chartData.balanceSourceData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={chartData.balanceSourceData} cx="50%" cy="50%" innerRadius={65} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
-                    {chartData.balanceSourceData.map((entry, index) => (
-                      <Cell key={`cell-bal-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={chartData.balanceSourceData} cx="50%" cy="50%" innerRadius={65} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
+                      {chartData.balanceSourceData.map((entry, index) => (
+                        <Cell key={`cell-bal-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Positivo</span>
+                  <span className="text-lg font-light text-white">{formatCurrency(chartData.balanceTotal)}</span>
+                </div>
+              </>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-500 italic text-xs text-center px-4">Sem saldo positivo no período</div>
+              <div className="h-full flex flex-col items-center justify-center text-gray-500 text-center px-4">
+                <i className="fas fa-wallet mb-3 text-3xl opacity-20 text-white"></i>
+                <span className="text-xs italic">Sem saldo positivo no período</span>
+              </div>
             )}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Positivo</span>
-              <span className="text-lg font-light text-white">{formatCurrency(chartData.balanceTotal)}</span>
-            </div>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2">
             {chartData.balanceSourceData.map((entry, idx) => (

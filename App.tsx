@@ -58,6 +58,7 @@ const App: React.FC = () => {
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [cardsConfigState, setCardsConfigState] = useState<import('./types').CardConfig[]>([]);
 
   // Efeitos de Gravação (Salvamento Automático)
   useEffect(() => { localStorage.setItem('ff_selected_months', JSON.stringify(selectedMonths)); }, [selectedMonths]);
@@ -68,10 +69,25 @@ const App: React.FC = () => {
 
   const allSelectedTransactions = useMemo(() => {
     let combined: Transaction[] = [];
+    const seenTxs = new Set<string>();
+    
     selectedMonths.forEach(mId => {
       const sheetTxs = spreadsheetTransactions[mId] || [];
       const manuals = manualTransactions[mId] || [];
-      combined = [...combined, ...sheetTxs, ...manuals];
+      const all = [...sheetTxs, ...manuals];
+      all.forEach(t => {
+        if (!seenTxs.has(t.id)) {
+           const dStr = t.paymentDate || t.date;
+           const parts = dStr.split('/');
+           if (parts.length >= 3) {
+             const m = `${parts[2]}-${parts[1]}`;
+             if (selectedMonths.includes(m)) {
+               seenTxs.add(t.id);
+               combined.push(t);
+             }
+           }
+        }
+      });
     });
     
     return combined.sort((a, b) => {
@@ -81,7 +97,7 @@ const App: React.FC = () => {
         const [day, month, year] = parts;
         return new Date(`${year}-${month}-${day}`).getTime();
       };
-      return parseDate(b.date) - parseDate(a.date);
+      return parseDate(b.paymentDate || b.date) - parseDate(a.paymentDate || a.date);
     });
   }, [spreadsheetTransactions, manualTransactions, selectedMonths]);
 
@@ -160,7 +176,35 @@ const App: React.FC = () => {
     return result;
   };
 
-  const processCSV = (text: string, source: SourceKey): Transaction[] => {
+  const processCardConfigs = (text: string): import('./types').CardConfig[] => {
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    const result: import('./types').CardConfig[] = [];
+    if (lines.length === 0) return [];
+    
+    let separator = ',';
+    if (lines[0].includes(';')) separator = ';';
+    
+    // Ignorar cabeçalho sempre
+    const headParts = parseCSVLine(lines[0], separator);
+    const hasHeader = headParts.length > 1 && isNaN(parseValue(headParts[1]));
+    const startIdx = hasHeader ? 1 : 0;
+
+    for (let i = startIdx; i < lines.length; i++) {
+        const parts = parseCSVLine(lines[i], separator);
+        if (parts.length < 3) continue;
+
+        const name = parts[0];
+        const closingDay = parseInt(parts[1], 10);
+        const dueDay = parseInt(parts[2], 10);
+
+        if (!name || isNaN(closingDay) || isNaN(dueDay)) continue;
+
+        result.push({ name, closingDay, dueDay });
+    }
+    return result;
+  };
+
+  const processCSV = (text: string, source: SourceKey, cardsConfig: import('./types').CardConfig[] = []): Transaction[] => {
     const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
     const result: Transaction[] = [];
     if (lines.length === 0) return [];
@@ -186,7 +230,28 @@ const App: React.FC = () => {
 
         if (isNaN(amount) || !dateStr || !desc) continue;
         
-        // As amounts have signs already.
+        // Handling Credit Cards payment Date
+        let paymentDate = dateStr;
+        if (cardsConfig && cardsConfig.length > 0) {
+            const card = cardsConfig.find(c => c.name.toLowerCase() === typeTag.toLowerCase());
+            if (card) {
+                const dateParts = dateStr.split('/');
+                if (dateParts.length === 3) {
+                    const day = parseInt(dateParts[0], 10);
+                    let month = parseInt(dateParts[1], 10);
+                    let year = parseInt(dateParts[2], 10);
+
+                    if (day >= card.closingDay) {
+                        month += 1;
+                        if (month > 12) {
+                            month = 1;
+                            year += 1;
+                        }
+                    }
+                    paymentDate = `${String(card.dueDay).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+                }
+            }
+        }
         
         result.push({
             id: `${source}-${dateStr}-${desc}-${amount}-${i}`,
@@ -196,7 +261,8 @@ const App: React.FC = () => {
             account: account,
             typeTag: typeTag,
             type: amount >= 0 ? 'income' : 'expense',
-            source: source
+            source: source,
+            paymentDate: paymentDate
         });
     }
     return result;
@@ -209,10 +275,52 @@ const App: React.FC = () => {
     const targetConfigs = configsOverride || monthConfigs;
     const newSpreadsheetData: Record<string, Transaction[]> = { ...spreadsheetTransactions };
 
+    // Fallback logic: if a month has no config, look for ANY month that has a spreadsheet URL
+    let globalFallbackConfig: Record<SourceKey, string> | null = null;
+    for (const conf of Object.values(targetConfigs)) {
+       if (conf['spreadsheet']) {
+          globalFallbackConfig = conf as Record<SourceKey, string>;
+          break;
+       }
+    }
+
+    // Get any cards config from ANY selected month, or the fallback, to apply globally across this fetch
+    let cardsConfig: import('./types').CardConfig[] = [];
+    const checkCardsConfig = async (sources: Record<SourceKey, string>) => {
+       const cardsUrl = sources['spreadsheet_cards'];
+       if (cardsUrl && cardsUrl.startsWith('http') && cardsConfig.length === 0) {
+          try {
+             let fetchUrl = cardsUrl;
+             if (cardsUrl.includes('docs.google.com/spreadsheets')) {
+                const idMatch = cardsUrl.match(/\/d\/(.+?)(\/|$)/);
+                const gidMatch = cardsUrl.match(/[#&]gid=([0-9]+)/);
+                if (idMatch && gidMatch) {
+                   fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv&gid=${gidMatch[1]}`;
+                } else if (idMatch) {
+                   fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv`;
+                }
+             }
+             const response = await fetch(fetchUrl);
+             if (response.ok) {
+                cardsConfig = processCardConfigs(await response.text());
+             }
+          } catch (e) { console.error("Error fetching cards", e); }
+       }
+    }
+    
     for (const mId of selectedMonths) {
-      const sources = targetConfigs[mId] || {};
+       await checkCardsConfig(targetConfigs[mId] || {});
+    }
+    if (cardsConfig.length === 0 && globalFallbackConfig) {
+       await checkCardsConfig(globalFallbackConfig);
+    }
+    
+    setCardsConfigState(cardsConfig);
+
+    for (const mId of selectedMonths) {
+      const sources = targetConfigs[mId] || globalFallbackConfig || {};
       const activeSources = (Object.entries(sources) as [SourceKey, string][])
-        .filter(([key, url]) => key !== 'manual' && url && url.startsWith('http'));
+        .filter(([key, url]) => key !== 'manual' && key !== 'spreadsheet_cards' && key !== 'apps_script' && url && url.startsWith('http'));
       
       let monthTxs: Transaction[] = [];
       for (const [key, url] of activeSources) {
@@ -220,12 +328,15 @@ const App: React.FC = () => {
           let fetchUrl = url;
           if (url.includes('docs.google.com/spreadsheets')) {
             const idMatch = url.match(/\/d\/(.+?)(\/|$)/);
-            if (idMatch) fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv`;
+            if (idMatch) {
+               // Ignore gid here to default to first sheet which we assume is the transactions sheet
+               fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv`;
+            }
           }
           const response = await fetch(fetchUrl);
           if (response.ok) {
             const text = await response.text();
-            monthTxs = [...monthTxs, ...processCSV(text, key)];
+            monthTxs = [...monthTxs, ...processCSV(text, key, cardsConfig)];
           }
         } catch (err) { console.error(`Erro ao buscar ${key}:`, err); }
       }
@@ -245,18 +356,74 @@ const App: React.FC = () => {
     fetchAllData(newConfigs);
   };
 
-  const handleAddOrEditManual = (tx: Transaction) => {
-    const parts = tx.date.split('/');
-    if (parts.length < 3) return;
-    const mId = `${parts[2]}-${parts[1]}`;
+  const handleAddOrEditManual = async (txs: Transaction[]) => {
+    let appsScriptUrl = '';
+    for (const conf of Object.values(monthConfigs)) {
+      if (conf['apps_script']) {
+        appsScriptUrl = conf['apps_script'];
+        break;
+      }
+    }
+
+    if (appsScriptUrl) {
+      setSyncing(true);
+      try {
+        setIsManualModalOpen(false); // Close first
+        for (const t of txs) {
+            const payload = {
+                data: t.date,
+                valor: t.amount.toString().replace('.', ','),
+                descricao: t.description,
+                conta: t.manualSourceLabel || t.typeTag || 'Outros',
+                tipo: 'Dashboard'
+            };
+
+            await fetch(appsScriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            // Pausa entre envios se for parcelado, para não sobrecarregar o Apps Script
+            if (txs.length > 1) {
+                await new Promise(r => setTimeout(r, 800));
+            }
+        }
+        
+        // Wait a small delay to allow Google Sheets to append and index
+        setTimeout(() => {
+            fetchAllData();
+            setSyncing(false);
+        }, 3000);
+        return; // Don't save to local storage since it's going to the sheet
+      } catch(e) {
+        console.error("Failed to sync with Apps Script, saving locally instead", e);
+        setSyncing(false);
+      }
+    }
 
     setManualTransactions(prev => {
-      const monthTxs = prev[mId] || [];
-      const exists = monthTxs.find(t => t.id === tx.id);
-      if (exists) {
-        return { ...prev, [mId]: monthTxs.map(t => t.id === tx.id ? tx : t) };
-      }
-      return { ...prev, [mId]: [...monthTxs, tx] };
+      const next = { ...prev };
+      
+      txs.forEach(tx => {
+          // If transaction has paymentDate, use it to determine the month!
+          const targetDateStr = tx.paymentDate || tx.date;
+          const parts = targetDateStr.split('/');
+          if (parts.length >= 3) {
+             const mId = `${parts[2]}-${parts[1]}`;
+             const monthTxs = next[mId] || [];
+             const existIdx = monthTxs.findIndex(t => t.id === tx.id);
+             if (existIdx >= 0) {
+                // Remove existing from where it might be, wait easier just to replace
+                monthTxs[existIdx] = tx;
+             } else {
+                monthTxs.push(tx);
+             }
+             next[mId] = monthTxs;
+          }
+      });
+      return next;
     });
     setAppState(AppState.READY);
     setEditingTransaction(null);
@@ -340,6 +507,7 @@ const App: React.FC = () => {
           }}
           onAdd={handleAddOrEditManual}
           editTransaction={editingTransaction}
+          cardsConfig={cardsConfigState}
         />
       )}
     </div>

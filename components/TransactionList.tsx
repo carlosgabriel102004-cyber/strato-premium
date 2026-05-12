@@ -71,8 +71,18 @@ return (
                   key={t.id} 
                   className={`transition-colors relative group ${isIgnored ? 'bg-white/5 italic opacity-50' : 'hover:bg-white/5'}`}
                 >
-                  <td className={`px-6 py-4 whitespace-nowrap text-xs font-mono ${isIgnored ? 'text-gray-500' : 'text-gray-300'}`}>
-                    {t.date}
+                  <td className={`px-6 py-4 whitespace-nowrap`}>
+                    <div className="flex flex-col justify-center">
+                        <span className={`text-xs font-mono ${isIgnored ? 'text-gray-500' : 'text-gray-300'}`}>
+                           {t.date}
+                        </span>
+                        {t.paymentDate && t.paymentDate !== t.date && (
+                           <span className="text-[10px] text-blue-400 font-medium mt-1 inline-flex items-center gap-1 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                             <i className="fas fa-flag text-[8px] opacity-70"></i>
+                             Vence: {t.paymentDate}
+                           </span>
+                        )}
+                    </div>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap`}>
                     <div className="flex flex-col">

@@ -1,5 +1,5 @@
 
-export type SourceKey = 'spreadsheet' | 'manual';
+export type SourceKey = 'spreadsheet' | 'spreadsheet_cards' | 'apps_script' | 'manual';
 
 export interface SourceConfig {
   id: SourceKey;
@@ -18,7 +18,15 @@ export interface Transaction {
   typeTag: string; /* e.g., Pix, Cartão Crédito */
   type: 'income' | 'expense';
   source: SourceKey;
+  paymentDate?: string; // Effective date for credit cards
 }
+
+export interface CardConfig {
+  name: string; // e.g. "Cartão Nubank"
+  closingDay: number;
+  dueDay: number;
+}
+
 
 export interface AIInsights {
   summary: string;

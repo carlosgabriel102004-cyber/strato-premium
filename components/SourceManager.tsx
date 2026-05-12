@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { SourceKey } from '../types';
+import AppsScriptModal from './AppsScriptModal';
 
 interface SourceManagerProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ interface SourceManagerProps {
 
 const SourceManager: React.FC<SourceManagerProps> = ({ onClose, currentSources, onUpdate, monthLabel }) => {
   const [localSources, setLocalSources] = useState(currentSources);
+  const [showAppsScriptModal, setShowAppsScriptModal] = useState(false);
 
   const handleSave = () => {
     onUpdate(localSources);
@@ -43,20 +45,61 @@ const SourceManager: React.FC<SourceManagerProps> = ({ onClose, currentSources, 
             </div>
           </div>
 
-          <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group transition-all focus-within:border-white/30">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-green-400">
-                <i className="fas fa-table"></i>
+          <div className="p-5 bg-white/5 rounded-2xl border border-white/10 group transition-all focus-within:border-white/30 space-y-4">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-green-400">
+                  <i className="fas fa-table"></i>
+                </div>
+                <label className="text-sm font-medium text-gray-200">Google Sheets - Extrato</label>
               </div>
-              <label className="text-sm font-medium text-gray-200">Google Sheets (CSV Link)</label>
+              <input 
+                type="url" 
+                placeholder="Link da aba extrato. Ex: https://docs.google.com/spreadsheets/d/.../edit"
+                className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-white/30 focus:border-white/30 transition-all outline-none"
+                value={localSources['spreadsheet'] || ''}
+                onChange={(e) => setLocalSources({...localSources, ['spreadsheet']: e.target.value})}
+              />
             </div>
-            <input 
-              type="url" 
-              placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv"
-              className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-white/30 focus:border-white/30 transition-all outline-none"
-              value={localSources['spreadsheet'] || ''}
-              onChange={(e) => setLocalSources({...localSources, ['spreadsheet']: e.target.value})}
-            />
+
+            <div className="pt-2">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-purple-400">
+                  <i className="fas fa-credit-card"></i>
+                </div>
+                <label className="text-sm font-medium text-gray-200">Google Sheets - Cartões</label>
+              </div>
+              <input 
+                type="url" 
+                placeholder="Link da aba de Cartões. Ex: .../edit#gid=123"
+                className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-white/30 focus:border-white/30 transition-all outline-none"
+                value={localSources['spreadsheet_cards'] || ''}
+                onChange={(e) => setLocalSources({...localSources, ['spreadsheet_cards']: e.target.value})}
+              />
+            </div>
+            <div className="pt-6 border-t border-white/5 pb-2">
+              <div className="flex items-center justify-between mb-3">
+                 <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-blue-400">
+                       <i className="fas fa-code"></i>
+                    </div>
+                    <label className="text-sm font-medium text-gray-200">Apps Script (Webhook)</label>
+                 </div>
+                 <button 
+                    onClick={() => setShowAppsScriptModal(true)}
+                    className="text-[10px] uppercase font-bold tracking-wider bg-indigo-500/20 text-indigo-400 px-3 py-1.5 rounded-lg hover:bg-indigo-500/30 transition-colors"
+                 >
+                    Como Configurar?
+                 </button>
+              </div>
+              <input 
+                 type="url" 
+                 placeholder="Cole aqui o link de implantação gerado pelo Apps Script"
+                 className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-white/30 focus:border-white/30 transition-all outline-none"
+                 value={localSources['apps_script'] || ''}
+                 onChange={(e) => setLocalSources({...localSources, ['apps_script']: e.target.value})}
+              />
+            </div>
           </div>
         </div>
 
@@ -76,6 +119,10 @@ const SourceManager: React.FC<SourceManagerProps> = ({ onClose, currentSources, 
           </button>
         </div>
       </div>
+      
+      {showAppsScriptModal && (
+        <AppsScriptModal onClose={() => setShowAppsScriptModal(false)} />
+      )}
     </div>
   );
 };

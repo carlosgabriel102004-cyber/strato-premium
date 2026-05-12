@@ -4,16 +4,23 @@ import { Transaction, SourceKey } from '../types';
 
 interface ManualEntryModalProps {
   onClose: () => void;
-  onAdd: (tx: Transaction) => void;
+  onAdd: (txs: Transaction[]) => void;
   editTransaction?: Transaction | null;
+  cardsConfig?: import('../types').CardConfig[];
 }
 
-const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, editTransaction }) => {
+const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, editTransaction, cardsConfig = [] }) => {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [sourceLabel, setSourceLabel] = useState('Dinheiro');
   const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [installments, setInstallments] = useState(1);
+
+  // Combine standard options with card options
+  const defaultSources = ['Dinheiro', 'PIX', 'Nubank PJ', 'Nubank PF', 'PicPay PF', 'PicPay PJ', 'Outros'];
+  const cardNames = cardsConfig.map(c => c.name);
+  const sourceOptions = Array.from(new Set([...defaultSources, ...cardNames]));
 
   useEffect(() => {
     if (editTransaction) {
@@ -21,30 +28,100 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
       setDate(`${y}-${m}-${d}`);
       setDescription(editTransaction.description);
       setAmount(Math.abs(editTransaction.amount).toString());
-      setSourceLabel(editTransaction.manualSourceLabel || 'Dinheiro');
+      
+      const src = editTransaction.typeTag || editTransaction.manualSourceLabel || 'Dinheiro';
+      if (!sourceOptions.includes(src)) {
+         sourceOptions.push(src);
+      }
+      setSourceLabel(src);
       setType(editTransaction.type);
+      setInstallments(1); // Cannot edit installments
     }
   }, [editTransaction]);
+
+  const calculatePaymentDate = (dString: string, typeTag: string) => {
+     let paymentDate = dString;
+     if (cardsConfig && cardsConfig.length > 0) {
+         const card = cardsConfig.find(c => c.name.toLowerCase() === typeTag.toLowerCase());
+         if (card) {
+             const dateParts = dString.split('/');
+             if (dateParts.length === 3) {
+                 const day = parseInt(dateParts[0], 10);
+                 let month = parseInt(dateParts[1], 10);
+                 let year = parseInt(dateParts[2], 10);
+
+                 if (day >= card.closingDay) {
+                     month += 1;
+                     if (month > 12) {
+                         month = 1;
+                         year += 1;
+                     }
+                 }
+                 paymentDate = `${String(card.dueDay).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+             }
+         }
+     }
+     return paymentDate;
+  };
+
+  const addMonths = (dateStr: string, monthsToAdd: number) => {
+     const [year, month, day] = dateStr.split('-');
+     const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+     d.setMonth(d.getMonth() + monthsToAdd);
+     const y = d.getFullYear();
+     const m = String(d.getMonth() + 1).padStart(2, '0');
+     const dDay = String(d.getDate()).padStart(2, '0');
+     return `${dDay}/${m}/${y}`;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount) return;
 
     const numAmount = Math.abs(parseFloat(amount));
-    const finalAmount = type === 'expense' ? -numAmount : numAmount;
+    const finalTotalAmount = type === 'expense' ? -numAmount : numAmount;
 
-    const newTx: Transaction = {
-      id: editTransaction ? editTransaction.id : `manual-${Date.now()}`,
-      date: date.split('-').reverse().join('/'),
-      description: description,
-      amount: finalAmount,
-      category: editTransaction?.category || 'Manual',
-      type: type,
-      source: editTransaction ? editTransaction.source : 'manual',
-      manualSourceLabel: sourceLabel
-    };
-
-    onAdd(newTx);
+    if (editTransaction || installments <= 1) {
+       const finalDString = date.split('-').reverse().join('/');
+       const pDate = calculatePaymentDate(finalDString, sourceLabel);
+       const newTx: Transaction = {
+         id: editTransaction ? editTransaction.id : `manual-${Date.now()}`,
+         date: finalDString,
+         description: description,
+         amount: finalTotalAmount,
+         category: editTransaction?.category || 'Manual',
+         type: type,
+         source: editTransaction ? editTransaction.source : 'manual',
+         manualSourceLabel: sourceLabel,
+         typeTag: sourceLabel,
+         paymentDate: pDate !== finalDString ? pDate : undefined
+       };
+       onAdd([newTx]);
+    } else {
+       // Handle multiple parcels
+       const amountPerParcel = parseFloat((finalTotalAmount / installments).toFixed(2));
+       const txs: Transaction[] = [];
+       
+       for (let i = 0; i < installments; i++) {
+          const installmentDateStr = addMonths(date, i); // e.g. "04/05/2026"
+          const pDate = calculatePaymentDate(installmentDateStr, sourceLabel);
+          
+          txs.push({
+             id: `manual-${Date.now()}-${i}`,
+             date: installmentDateStr,
+             description: `${description} (${i + 1}/${installments})`,
+             amount: i === installments - 1 ? finalTotalAmount - (amountPerParcel * (installments - 1)) : amountPerParcel, 
+             category: 'Manual',
+             type: type,
+             source: 'manual',
+             manualSourceLabel: sourceLabel,
+             typeTag: sourceLabel,
+             paymentDate: pDate !== installmentDateStr ? pDate : undefined 
+          });
+       }
+       onAdd(txs);
+    }
+    
     onClose();
   };
 
@@ -99,14 +176,37 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
                   onChange={(e) => setSourceLabel(e.target.value)}
                   disabled={editTransaction && editTransaction.source !== 'manual'}
                 >
-                  <option value="Dinheiro">Dinheiro</option>
-                  <option value="Nubank PJ">Nubank PJ</option>
-                  <option value="Nubank PF">Nubank PF</option>
-                  <option value="Nubank CC">Nubank CC</option>
-                  <option value="PicPay PF">PicPay PF</option>
-                  <option value="PicPay PJ">PicPay PJ</option>
-                  <option value="Outros">Outros</option>
+                  {sourceOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Parcelas</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  max="48"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:opacity-50"
+                  value={installments}
+                  onChange={(e) => setInstallments(parseInt(e.target.value) || 1)}
+                  disabled={!!editTransaction}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor Total (R$)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  placeholder="0,00"
+                  required
+                  className={`w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}`}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
               </div>
             </div>
 
@@ -119,19 +219,6 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Valor (R$)</label>
-              <input 
-                type="number" 
-                step="0.01"
-                placeholder="0,00"
-                required
-                className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}`}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
               />
             </div>
           </div>
