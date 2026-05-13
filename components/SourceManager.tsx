@@ -77,6 +77,22 @@ const SourceManager: React.FC<SourceManagerProps> = ({ onClose, currentSources, 
                 onChange={(e) => setLocalSources({...localSources, ['spreadsheet_cards']: e.target.value})}
               />
             </div>
+
+            <div className="pt-2">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-indigo-400">
+                  <i className="fas fa-university"></i>
+                </div>
+                <label className="text-sm font-medium text-gray-200">Google Sheets - Bancos</label>
+              </div>
+              <input 
+                type="url" 
+                placeholder="Link da aba de Bancos. Ex: .../edit#gid=456"
+                className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-white/30 focus:border-white/30 transition-all outline-none"
+                value={localSources['spreadsheet_banks'] || ''}
+                onChange={(e) => setLocalSources({...localSources, ['spreadsheet_banks']: e.target.value})}
+              />
+            </div>
             <div className="pt-6 border-t border-white/5 pb-2">
               <div className="flex items-center justify-between mb-3">
                  <div className="flex items-center gap-3">
