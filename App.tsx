@@ -523,8 +523,7 @@ const App: React.FC = () => {
           onAdd={handleAddOrEditManual}
           editTransaction={editingTransaction}
           cardsConfig={cardsConfigState}
-          knownAccounts={Array.from(new Set(Object.values(spreadsheetTransactions).flat().map(t => t.account).filter(Boolean)))}
-          knownTypes={Array.from(new Set(Object.values(spreadsheetTransactions).flat().map(t => t.typeTag).filter(Boolean)))}
+          allTransactions={Object.values(spreadsheetTransactions).flat()}
         />
       )}
     </div>

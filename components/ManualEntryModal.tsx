@@ -7,30 +7,51 @@ interface ManualEntryModalProps {
   onAdd: (txs: Transaction[]) => void;
   editTransaction?: Transaction | null;
   cardsConfig?: import('../types').CardConfig[];
-  knownAccounts?: string[];
-  knownTypes?: string[];
+  allTransactions?: Transaction[];
 }
 
-const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, editTransaction, cardsConfig = [], knownAccounts = [], knownTypes = [] }) => {
+const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, editTransaction, cardsConfig = [], allTransactions = [] }) => {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   
-  // Create account Options array from the ones passed
-  const accountOptions = Array.from(new Set( [...knownAccounts].filter(Boolean) ));
+  // Map accounts to specific valid types they've used
+  const accountToTypes: Record<string, Set<string>> = {};
+  allTransactions.forEach(t => {
+     if (t.account && t.typeTag) {
+        if (!accountToTypes[t.account]) accountToTypes[t.account] = new Set();
+        accountToTypes[t.account].add(t.typeTag);
+     }
+  });
+
+  const accountOptions = Object.keys(accountToTypes);
   if (accountOptions.length === 0) {
       accountOptions.push('Nubank PF', 'Outros');
   }
 
-  // Create type Options array from the ones passed
-  const cardNames = cardsConfig.map(c => c.name);
-  const typeOptions = Array.from(new Set( [...knownTypes, ...cardNames].filter(Boolean) ));
+  const initialAccount = accountOptions.includes(editTransaction?.account || '') ? editTransaction!.account! : accountOptions[0];
+  const [account, setAccount] = useState(initialAccount);
+
+  let typeOptions = accountToTypes[account] ? Array.from(accountToTypes[account]) : [];
   if (typeOptions.length === 0) {
-      typeOptions.push('Cartão Nubank', 'PIX');
+      const cardNames = cardsConfig.map(c => c.name);
+      typeOptions = Array.from(new Set(['PIX', 'Débito', ...cardNames]));
   }
 
-  const [account, setAccount] = useState(accountOptions.includes(editTransaction?.account || '') ? editTransaction!.account : accountOptions[0]);
-  const [typeTag, setTypeTag] = useState(typeOptions.includes(editTransaction?.typeTag || '') ? editTransaction!.typeTag : typeOptions[0]);
+  const [typeTag, setTypeTag] = useState(() => {
+      if (editTransaction?.typeTag && typeOptions.includes(editTransaction.typeTag)) {
+          return editTransaction.typeTag;
+      }
+      return typeOptions[0] || '';
+  });
+
+  // Whenever account changes, update typeTag if the current one is invalidated
+  useEffect(() => {
+      if (typeOptions.length > 0 && !typeOptions.includes(typeTag)) {
+          setTypeTag(typeOptions[0]);
+      }
+  }, [account, typeOptions, typeTag]);
+
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [installments, setInstallments] = useState(1);
 
@@ -49,9 +70,6 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
       setAccount(acc);
       
       const typ = editTransaction.typeTag || 'PIX';
-      if (!typeOptions.includes(typ)) {
-         typeOptions.push(typ);
-      }
       setTypeTag(typ);
       
       setType(editTransaction.type);
@@ -162,7 +180,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
         <form onSubmit={handleSubmit} className="relative z-10">
           <div className="p-6 pb-2 flex items-center justify-between">
             <div>
-              <h3 className="text-[22px] font-bold text-white tracking-tight">{editTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+              <h3 className="text-[20px] font-semibold text-white tracking-tight">{editTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
               <p className="text-sm text-gray-400/80 font-medium mt-0.5">{editTransaction ? 'Ajuste os dados da transação' : 'Adicione um gasto ou ganho manual'}</p>
             </div>
             <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
@@ -190,7 +208,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Data</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Data</label>
                 <input 
                   type="date" 
                   required
@@ -200,13 +218,13 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Valor Total (R$)</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Valor Total (R$)</label>
                 <input 
                   type="number" 
                   step="0.01"
                   placeholder="0,00"
                   required
-                  className={`w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-lg font-bold focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none ${type === 'expense' ? 'text-white' : 'text-white'}`}
+                  className={`w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-lg font-medium focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none ${type === 'expense' ? 'text-white' : 'text-white'}`}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -215,7 +233,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Banco / Conta</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Banco / Conta</label>
                 <select 
                   className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-[15px] font-medium text-white focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none appearance-none"
                   value={account}
@@ -228,10 +246,10 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Tipo / Cartão</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Tipo / Cartão</label>
                 <select 
                   className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-[15px] font-medium text-white focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none appearance-none"
-                  value={typeTag}
+                  value={typeOptions.includes(typeTag) ? typeTag : (typeOptions[0] || '')}
                   onChange={(e) => setTypeTag(e.target.value)}
                   style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%239ca3af\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 12px center', backgroundRepeat: 'no-repeat', backgroundSize: '1em' }}
                 >
@@ -244,7 +262,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Parcelas</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Parcelas</label>
                 <input 
                   type="number" 
                   min="1"
@@ -258,7 +276,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Descrição</label>
+              <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Descrição</label>
               <input 
                 type="text" 
                 placeholder="Ex: Almoço no quilo, Pagamento João..."
@@ -273,7 +291,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
           <div className="p-6 pt-2">
             <button 
               type="submit"
-              className={`w-full py-4 text-[15px] text-white font-bold rounded-2xl shadow-[0_8px_20px_rgba(255,59,92,0.25)] transition-all transform hover:scale-[1.02] active:scale-[0.98] ${type === 'expense' ? 'bg-[#ff3b5c] hover:bg-[#ff4f6d]' : 'bg-[#34c759] hover:bg-[#3ddc62] shadow-[0_8px_20px_rgba(52,199,89,0.25)]'}`}
+              className={`w-full py-4 text-[15px] text-white font-semibold rounded-2xl shadow-[0_8px_20px_rgba(255,59,92,0.25)] transition-all transform hover:scale-[1.02] active:scale-[0.98] ${type === 'expense' ? 'bg-[#ff3b5c] hover:bg-[#ff4f6d]' : 'bg-[#34c759] hover:bg-[#3ddc62] shadow-[0_8px_20px_rgba(52,199,89,0.25)]'}`}
             >
               {editTransaction ? 'Atualizar Lançamento' : 'Salvar Lançamento'}
             </button>
