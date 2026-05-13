@@ -115,11 +115,11 @@ const Header: React.FC<HeaderProps> = ({
           <div className="relative flex-shrink-0">
              <button 
                 onClick={() => setIsYearPickerOpen(!isYearPickerOpen)}
-                className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/5 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-200 transition-all backdrop-blur-md h-8"
+                className="flex items-center gap-1.5 bg-[#121214]/60 hover:bg-[#121214]/80 border border-white/[0.08] px-4 rounded-[16px] text-xs font-bold text-gray-200 transition-all backdrop-blur-[24px] h-[38px] min-h-[38px] shadow-[inset_0_0_12px_rgba(255,255,255,0.02)]"
              >
-                <i className="far fa-calendar-alt text-blue-400 mr-1"></i>
+                <i className="far fa-calendar-alt text-blue-400 mr-0.5"></i>
                 {viewYear}
-                <i className={`fas fa-chevron-down text-[10px] opacity-70 transition-transform ml-0.5 ${isYearPickerOpen ? 'rotate-180' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-[9px] opacity-70 transition-transform ml-1 ${isYearPickerOpen ? 'rotate-180' : ''}`}></i>
              </button>
              {isYearPickerOpen && (
                 <>
@@ -146,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({
 
           <div
              ref={scrollRef}
-             className="flex items-center p-1 overflow-x-auto no-scrollbar scroll-smooth bg-white/5 rounded-full border border-white/5 backdrop-blur-md w-max"
+             className="flex items-center p-1 overflow-x-auto no-scrollbar scroll-smooth bg-[#121214]/60 rounded-[16px] border border-white/[0.08] backdrop-blur-[24px] shadow-[inset_0_0_12px_rgba(255,255,255,0.02)] min-h-[38px] w-max gap-[2px]"
           >
              {months.map((name, i) => {
                 const mId = `${viewYear}-${String(i + 1).padStart(2, '0')}`;
@@ -155,7 +155,7 @@ const Header: React.FC<HeaderProps> = ({
                    <button
                       key={mId}
                       onClick={() => toggleMonth(mId)}
-                      className={`flex-shrink-0 px-3 py-1 rounded-full text-xs transition-all ${isSelected ? 'bg-white text-black shadow-sm font-semibold' : 'bg-transparent text-gray-400 hover:text-gray-200 font-medium'}`}
+                      className={`flex-shrink-0 px-3.5 py-[5px] rounded-[12px] text-[11px] uppercase tracking-wider transition-all ${isSelected ? 'bg-white text-black shadow-[0_2px_8px_rgba(255,255,255,0.3)] font-black' : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5 font-semibold'}`}
                    >
                      {name}
                    </button>

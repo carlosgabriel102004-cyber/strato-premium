@@ -428,7 +428,7 @@ const App: React.FC = () => {
             await fetch(appsScriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload)
             });
             
@@ -556,6 +556,8 @@ const App: React.FC = () => {
           editTransaction={editingTransaction}
           cardsConfig={cardsConfigState}
           banksConfig={banksConfigState}
+          knownAccounts={Array.from(new Set(allSelectedTransactions.map(t => t.account).filter(Boolean)))}
+          knownTypes={Array.from(new Set(allSelectedTransactions.map(t => t.typeTag).filter(Boolean)))}
         />
       )}
     </div>
