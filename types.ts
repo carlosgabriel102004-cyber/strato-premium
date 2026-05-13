@@ -1,5 +1,5 @@
 
-export type SourceKey = 'spreadsheet' | 'spreadsheet_cards' | 'spreadsheet_banks' | 'apps_script' | 'manual';
+export type SourceKey = 'spreadsheet' | 'spreadsheet_cards' | 'apps_script' | 'manual';
 
 export interface SourceConfig {
   id: SourceKey;

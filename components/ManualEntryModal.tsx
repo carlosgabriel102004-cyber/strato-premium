@@ -7,18 +7,17 @@ interface ManualEntryModalProps {
   onAdd: (txs: Transaction[]) => void;
   editTransaction?: Transaction | null;
   cardsConfig?: import('../types').CardConfig[];
-  banksConfig?: string[];
   knownAccounts?: string[];
   knownTypes?: string[];
 }
 
-const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, editTransaction, cardsConfig = [], banksConfig = [], knownAccounts = [], knownTypes = [] }) => {
+const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, editTransaction, cardsConfig = [], knownAccounts = [], knownTypes = [] }) => {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   
   // Create account Options array from the ones passed
-  const accountOptions = Array.from(new Set( [...knownAccounts, ...banksConfig].filter(Boolean) ));
+  const accountOptions = Array.from(new Set( [...knownAccounts].filter(Boolean) ));
   if (accountOptions.length === 0) {
       accountOptions.push('Nubank PF', 'Outros');
   }

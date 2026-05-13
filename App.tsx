@@ -59,7 +59,6 @@ const App: React.FC = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [cardsConfigState, setCardsConfigState] = useState<import('./types').CardConfig[]>([]);
-  const [banksConfigState, setBanksConfigState] = useState<string[]>([]);
 
   // Efeitos de Gravação (Salvamento Automático)
   useEffect(() => { localStorage.setItem('ff_selected_months', JSON.stringify(selectedMonths)); }, [selectedMonths]);
@@ -210,17 +209,6 @@ const App: React.FC = () => {
     return result;
   };
 
-  const processBankConfigs = (csvText: string): string[] => {
-    const lines = csvText.split(/\r?\n/).filter(l => l.trim().length > 0);
-    const result: string[] = [];
-    for (let i = 1; i < lines.length; i++) { // Skip header
-        const parts = lines[i].split(',').map(p => p.trim());
-        const name = parts[0]; // Assuming bank name is the first column
-        if (name && !result.includes(name)) result.push(name);
-    }
-    return result;
-  };
-
   const processCSV = (text: string, source: SourceKey, cardsConfig: import('./types').CardConfig[] = []): Transaction[] => {
     const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
     const result: Transaction[] = [];
@@ -310,7 +298,6 @@ const App: React.FC = () => {
 
     // Get any cards config from ANY selected month, or the fallback, to apply globally across this fetch
     let cardsConfig: import('./types').CardConfig[] = [];
-    let banksConfig: string[] = [];
 
     const checkConfigs = async (sources: Record<SourceKey, string>) => {
        const cardsUrl = sources['spreadsheet_cards'];
@@ -333,41 +320,22 @@ const App: React.FC = () => {
           } catch (e) { console.error("Error fetching cards", e); }
        }
 
-       const banksUrl = sources['spreadsheet_banks'];
-       if (banksUrl && banksUrl.startsWith('http') && banksConfig.length === 0) {
-          try {
-             let fetchUrl = banksUrl;
-             if (banksUrl.includes('docs.google.com/spreadsheets')) {
-                const idMatch = banksUrl.match(/\/d\/(.+?)(\/|$)/);
-                const gidMatch = banksUrl.match(/[#&]gid=([0-9]+)/);
-                if (idMatch && gidMatch) {
-                   fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv&gid=${gidMatch[1]}`;
-                } else if (idMatch) {
-                   fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv`;
-                }
-             }
-             const response = await fetch(fetchUrl);
-             if (response.ok) {
-                banksConfig = processBankConfigs(await response.text());
-             }
-          } catch (e) { console.error("Error fetching banks", e); }
-       }
+
     }
     
     for (const mId of selectedMonths) {
        await checkConfigs(targetConfigs[mId] || {});
     }
-    if ((cardsConfig.length === 0 || banksConfig.length === 0) && globalFallbackConfig) {
+    if (cardsConfig.length === 0 && globalFallbackConfig) {
        await checkConfigs(globalFallbackConfig);
     }
     
     setCardsConfigState(cardsConfig);
-    setBanksConfigState(banksConfig);
 
     for (const mId of selectedMonths) {
       const sources = targetConfigs[mId] || globalFallbackConfig || {};
       const activeSources = (Object.entries(sources) as [SourceKey, string][])
-        .filter(([key, url]) => key !== 'manual' && key !== 'spreadsheet_cards' && key !== 'spreadsheet_banks' && key !== 'apps_script' && url && url.startsWith('http'));
+        .filter(([key, url]) => key !== 'manual' && key !== 'spreadsheet_cards' && key !== 'apps_script' && url && url.startsWith('http'));
       
       let monthTxs: Transaction[] = [];
       for (const [key, url] of activeSources) {
@@ -555,9 +523,8 @@ const App: React.FC = () => {
           onAdd={handleAddOrEditManual}
           editTransaction={editingTransaction}
           cardsConfig={cardsConfigState}
-          banksConfig={banksConfigState}
-          knownAccounts={Array.from(new Set(allSelectedTransactions.map(t => t.account).filter(Boolean)))}
-          knownTypes={Array.from(new Set(allSelectedTransactions.map(t => t.typeTag).filter(Boolean)))}
+          knownAccounts={Array.from(new Set(Object.values(spreadsheetTransactions).flat().map(t => t.account).filter(Boolean)))}
+          knownTypes={Array.from(new Set(Object.values(spreadsheetTransactions).flat().map(t => t.typeTag).filter(Boolean)))}
         />
       )}
     </div>
