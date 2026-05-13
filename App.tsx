@@ -387,10 +387,10 @@ const App: React.FC = () => {
         for (const t of txs) {
             const payload = {
                 data: t.date,
-                valor: t.amount.toString().replace('.', ','),
+                valor: t.amount.toFixed(2).replace('.', ','),
                 descricao: t.description,
-                conta: t.account || 'Outros', // Use t.account!
-                tipo: t.typeTag || 'Dashboard' // Use t.typeTag!
+                conta: t.account || 'Outros',
+                tipo: t.typeTag || 'Dashboard'
             };
 
             await fetch(appsScriptUrl, {
