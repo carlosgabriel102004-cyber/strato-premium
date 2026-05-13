@@ -111,11 +111,11 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <div className="container mx-auto px-4 pb-3 flex flex-row items-center gap-3">
+      <div className="container mx-auto px-4 pb-3 flex flex-row items-center gap-2 sm:gap-3">
           <div className="relative flex-shrink-0">
              <button 
                 onClick={() => setIsYearPickerOpen(!isYearPickerOpen)}
-                className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/5 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-200 transition-all backdrop-blur-md"
+                className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/5 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-200 transition-all backdrop-blur-md h-8"
              >
                 <i className="far fa-calendar-alt text-blue-400 mr-1"></i>
                 {viewYear}
@@ -146,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({
 
           <div
              ref={scrollRef}
-             className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pr-4 mask-fade-right"
+             className="flex items-center p-1 overflow-x-auto no-scrollbar scroll-smooth bg-white/5 rounded-full border border-white/5 backdrop-blur-md w-max"
           >
              {months.map((name, i) => {
                 const mId = `${viewYear}-${String(i + 1).padStart(2, '0')}`;
@@ -155,7 +155,7 @@ const Header: React.FC<HeaderProps> = ({
                    <button
                       key={mId}
                       onClick={() => toggleMonth(mId)}
-                      className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs transition-all border ${isSelected ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)] font-semibold' : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-gray-200 font-medium'}`}
+                      className={`flex-shrink-0 px-3 py-1 rounded-full text-xs transition-all ${isSelected ? 'bg-white text-black shadow-sm font-semibold' : 'bg-transparent text-gray-400 hover:text-gray-200 font-medium'}`}
                    >
                      {name}
                    </button>

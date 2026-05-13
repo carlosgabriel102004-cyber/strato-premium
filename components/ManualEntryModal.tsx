@@ -149,32 +149,32 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-3xl animate-in fade-in duration-300">
-      <div className="bg-[#1a1a1c]/70 border border-white-[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl rounded-[32px] w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white/5 border border-white/10 shadow-2xl backdrop-blur-3xl rounded-[32px] w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
         <form onSubmit={handleSubmit}>
           <div className="p-6 pb-2 flex items-center justify-between">
             <div>
-              <h3 className="text-[22px] font-bold text-white tracking-tight">{editTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
-              <p className="text-sm text-gray-400/80 font-medium">{editTransaction ? 'Ajuste os dados da transação' : 'Adicione um gasto ou ganho manual'}</p>
+              <h3 className="text-xl font-semibold text-white tracking-tight">{editTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+              <p className="text-sm text-gray-400 font-medium">{editTransaction ? 'Ajuste os dados da transação' : 'Adicione um gasto ou ganho manual'}</p>
             </div>
-            <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+            <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
               <i className="fas fa-times text-sm"></i>
             </button>
           </div>
 
           <div className="p-6 space-y-5">
-            <div className="flex bg-black/40 p-1.5 rounded-2xl mb-1 shadow-inner ring-1 ring-white/5">
+            <div className="flex bg-white/5 p-1 rounded-2xl mb-1 shadow-inner ring-1 ring-white/5 backdrop-blur-md">
               <button 
                 type="button"
                 onClick={() => setType('expense')}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${type === 'expense' ? 'bg-[#ff3b5c]/20 text-[#ff3b5c] shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex-1 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${type === 'expense' ? 'bg-[#ff3b5c]/20 text-[#ff3b5c] shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               >
                 Saída
               </button>
               <button 
                 type="button"
                 onClick={() => setType('income')}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${type === 'income' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex-1 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${type === 'income' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               >
                 Entrada
               </button>
@@ -182,23 +182,23 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Data</label>
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Data</label>
                 <input 
                   type="date" 
                   required
-                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none [color-scheme:dark]"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all outline-none [color-scheme:dark]"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Valor Total (R$)</label>
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Valor Total (R$)</label>
                 <input 
                   type="number" 
                   step="0.01"
                   placeholder="0,00"
                   required
-                  className={`w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-lg font-bold focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none ${type === 'expense' ? 'text-[#ff3b5c]' : 'text-[#34c759]'}`}
+                  className={`w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-lg font-medium focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all outline-none ${type === 'expense' ? 'text-[#ff3b5c]' : 'text-[#34c759]'}`}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -207,9 +207,9 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Banco / Conta</label>
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Banco / Conta</label>
                 <select 
-                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none font-medium appearance-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all outline-none font-medium appearance-none"
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
                   style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%239ca3af\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 12px center', backgroundRepeat: 'no-repeat', backgroundSize: '1em' }}
@@ -220,9 +220,9 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Tipo / Cartão</label>
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Tipo / Cartão</label>
                 <select 
-                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none font-medium appearance-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all outline-none font-medium appearance-none"
                   value={typeTag}
                   onChange={(e) => setTypeTag(e.target.value)}
                   style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%239ca3af\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 12px center', backgroundRepeat: 'no-repeat', backgroundSize: '1em' }}
@@ -236,12 +236,12 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
 
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Parcelas</label>
+                <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Parcelas</label>
                 <input 
                   type="number" 
                   min="1"
                   max="48"
-                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none disabled:opacity-30"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all outline-none disabled:opacity-30"
                   value={installments}
                   onChange={(e) => setInstallments(parseInt(e.target.value) || 1)}
                   disabled={!!editTransaction}
@@ -250,12 +250,12 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Descrição</label>
+              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Descrição</label>
               <input 
                 type="text" 
                 placeholder="Ex: Almoço no quilo, Pagamento João..."
                 required
-                className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/10 transition-all outline-none placeholder-gray-500/50"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all outline-none placeholder-gray-500/50"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
@@ -265,7 +265,7 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
           <div className="p-6 pt-2">
             <button 
               type="submit"
-              className={`w-full py-4 text-white font-bold rounded-2xl shadow-[0_8px_20px_rgba(255,59,92,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] ${type === 'expense' ? 'bg-[#ff3b5c] hover:bg-[#ff4f6d]' : 'bg-[#34c759] hover:bg-[#3ddc62] shadow-[0_8px_20px_rgba(52,199,89,0.3)]'}`}
+              className={`w-full py-3.5 text-white font-semibold rounded-2xl shadow-[0_8px_20px_rgba(255,59,92,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] ${type === 'expense' ? 'bg-[#ff3b5c] hover:bg-[#ff4f6d]' : 'bg-[#34c759] hover:bg-[#3ddc62] shadow-[0_8px_20px_rgba(52,199,89,0.3)]'}`}
             >
               {editTransaction ? 'Atualizar Lançamento' : 'Salvar Lançamento'}
             </button>
