@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, selectedMonths, onMo
         <div className="flex items-center justify-between mb-6 px-2">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-sm border border-slate-100">
-              <img src="https://i.ibb.co/Gf1dNfT2/logo-strato-tomate.png" alt="Strato Tomate" className="w-full h-full object-cover scale-[1.4]" />
+              <img src="https://i.ibb.co/Gf1dNfT2/logo-strato-tomate.png" alt="Strato Tomate" className="w-full h-full object-cover scale-[1.95]" />
             </div>
             <span className="text-2xl font-black text-rose-600 uppercase tracking-tighter">Strato</span>
           </div>
