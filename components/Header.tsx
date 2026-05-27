@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.2)] overflow-hidden">
-               <img src="https://i.ibb.co/Gf1dNfT2/logo-strato-tomate.png" alt="Strato Tomate" className="w-full h-full object-cover scale-[1.95]" />
+               <img src="https://i.ibb.co/Gf1dNfT2/logo-strato-tomate.png" alt="Strato Tomate" className="w-full h-full object-cover scale-[1.4]" />
             </div>
             <h1 className="text-xl font-bold text-white hidden lg:block tracking-tight delay-100">Strato</h1>
           </div>
