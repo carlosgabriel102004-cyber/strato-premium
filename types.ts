@@ -1,5 +1,5 @@
 
-export type SourceKey = 'spreadsheet' | 'spreadsheet_cards' | 'apps_script' | 'manual';
+export type SourceKey = 'spreadsheet' | 'spreadsheet_cards' | 'spreadsheet_subscriptions' | 'apps_script' | 'manual';
 
 export interface SourceConfig {
   id: SourceKey;
@@ -27,6 +27,14 @@ export interface CardConfig {
   dueDay: number;
 }
 
+
+export interface Subscription {
+  status: string;
+  amount: number;
+  description: string;
+  cardName: string;
+  dueDay: number;
+}
 
 export interface AIInsights {
   summary: string;

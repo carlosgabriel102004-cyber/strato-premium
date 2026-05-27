@@ -209,6 +209,39 @@ const App: React.FC = () => {
     return result;
   };
 
+  const processSubscriptions = (text: string): import('./types').Subscription[] => {
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    const result: import('./types').Subscription[] = [];
+    if (lines.length === 0) return [];
+
+    let separator = ',';
+    if (lines[0].includes(';')) separator = ';';
+    
+    // Ignorar cabeçalho sempre
+    const headParts = parseCSVLine(lines[0], separator);
+    const hasHeader = isNaN(parseValue(headParts[1]));
+    const startIdx = hasHeader ? 1 : 0;
+
+    for (let i = startIdx; i < lines.length; i++) {
+        const parts = parseCSVLine(lines[i], separator);
+        if (parts.length < 5) continue;
+
+        const status = parts[0].trim();
+        if (status !== 'Ativa') continue;
+
+        let amount = parseValue(parts[1]);
+        const description = parts[2].trim();
+        const cardName = parts[3].trim();
+        const dueDayMatch = parts[4].match(/\d+/);
+        const dueDay = dueDayMatch ? parseInt(dueDayMatch[0], 10) : 1;
+        
+        if (!isNaN(amount)) {
+            result.push({ status, amount, description, cardName, dueDay });
+        }
+    }
+    return result;
+  };
+
   const processCSV = (text: string, source: SourceKey, cardsConfig: import('./types').CardConfig[] = []): Transaction[] => {
     const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
     const result: Transaction[] = [];
@@ -298,6 +331,7 @@ const App: React.FC = () => {
 
     // Get any cards config from ANY selected month, or the fallback, to apply globally across this fetch
     let cardsConfig: import('./types').CardConfig[] = [];
+    let subscriptionsConfig: import('./types').Subscription[] = [];
 
     const checkConfigs = async (sources: Record<SourceKey, string>) => {
        const cardsUrl = sources['spreadsheet_cards'];
@@ -320,7 +354,25 @@ const App: React.FC = () => {
           } catch (e) { console.error("Error fetching cards", e); }
        }
 
-
+       const subsUrl = sources['spreadsheet_subscriptions'];
+       if (subsUrl && subsUrl.startsWith('http') && subscriptionsConfig.length === 0) {
+          try {
+             let fetchUrl = subsUrl;
+             if (subsUrl.includes('docs.google.com/spreadsheets')) {
+                const idMatch = subsUrl.match(/\/d\/(.+?)(\/|$)/);
+                const gidMatch = subsUrl.match(/[#&]gid=([0-9]+)/);
+                if (idMatch && gidMatch) {
+                   fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv&gid=${gidMatch[1]}`;
+                } else if (idMatch) {
+                   fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv`;
+                }
+             }
+             const response = await fetch(fetchUrl);
+             if (response.ok) {
+                subscriptionsConfig = processSubscriptions(await response.text());
+             }
+          } catch (e) { console.error("Error fetching subscriptions", e); }
+       }
     }
     
     for (const mId of selectedMonths) {
@@ -335,7 +387,7 @@ const App: React.FC = () => {
     for (const mId of selectedMonths) {
       const sources = targetConfigs[mId] || globalFallbackConfig || {};
       const activeSources = (Object.entries(sources) as [SourceKey, string][])
-        .filter(([key, url]) => key !== 'manual' && key !== 'spreadsheet_cards' && key !== 'apps_script' && url && url.startsWith('http'));
+        .filter(([key, url]) => key !== 'manual' && key !== 'spreadsheet_cards' && key !== 'spreadsheet_subscriptions' && key !== 'apps_script' && url && url.startsWith('http'));
       
       let monthTxs: Transaction[] = [];
       for (const [key, url] of activeSources) {
@@ -355,6 +407,22 @@ const App: React.FC = () => {
           }
         } catch (err) { console.error(`Erro ao buscar ${key}:`, err); }
       }
+
+      if (mId >= '2026-07' && subscriptionsConfig.length > 0) {
+          subscriptionsConfig.forEach((sub, idx) => {
+              monthTxs.push({
+                  id: `sub-${mId}-${idx}`,
+                  date: `${mId}-${sub.dueDay.toString().padStart(2, '0')}`,
+                  amount: -sub.amount,
+                  description: sub.description,
+                  account: sub.cardName,
+                  typeTag: 'Assinatura',
+                  type: 'expense',
+                  source: 'spreadsheet_subscriptions'
+              });
+          });
+      }
+
       newSpreadsheetData[mId] = monthTxs;
     }
 

@@ -23,7 +23,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, selectedMonths, onMo
     <aside className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform bg-white border-r border-slate-200 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="h-full px-3 py-4 overflow-y-auto flex flex-col">
         <div className="flex items-center justify-between mb-6 px-2">
-          <span className="text-xl font-black text-indigo-600 uppercase tracking-tighter">Strato</span>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-transparent">
+              <img src="https://i.ibb.co/Gf1dNfT2/logo-strato-tomate.png" alt="Strato Tomate" className="w-[85%] h-[85%] object-contain drop-shadow" />
+            </div>
+            <span className="text-xl font-black text-rose-600 uppercase tracking-tighter">Strato</span>
+          </div>
           <button onClick={onClose} className="md:hidden p-2 text-slate-400">
             <i className="fas fa-times"></i>
           </button>
