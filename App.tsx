@@ -219,8 +219,8 @@ const App: React.FC = () => {
         return new Date(`${year}-${month}-${day}`).getTime();
       };
       
-      const dateA = parseDateForSort(a.paymentDate || a.date);
-      const dateB = parseDateForSort(b.paymentDate || b.date);
+      const dateA = parseDateForSort(a.date);
+      const dateB = parseDateForSort(b.date);
       const dateDiff = dateB - dateA;
 
       if (dateDiff === 0) {
