@@ -76,7 +76,7 @@ const App: React.FC = () => {
       const manuals = manualTransactions[mId] || [];
       const all = [...sheetTxs, ...manuals];
       all.forEach(t => {
-        const logicalId = t.source === 'manual' ? t.id : `${t.date}_${t.description}_${t.amount}_${t.account}`;
+        const logicalId = `${t.date}_${t.description}_${t.amount}_${t.account}`;
         if (!seenTxs.has(logicalId)) {
            const dStr = t.paymentDate || t.date;
            const parts = dStr.split('/');
@@ -117,7 +117,7 @@ const App: React.FC = () => {
       const manuals = manualTransactions[mId] || [];
       const all = [...sheetTxs, ...manuals]; 
       all.forEach(t => {
-        const logicalId = t.source === 'manual' ? t.id : `${t.date}_${t.description}_${t.amount}_${t.account}`;
+        const logicalId = `${t.date}_${t.description}_${t.amount}_${t.account}`;
         if (!seenTxs.has(logicalId)) {
            seenTxs.add(logicalId);
            rawCombined.push(t);
@@ -137,7 +137,7 @@ const App: React.FC = () => {
       
       const groupKey = (t.typeTag === 'Assinatura') 
         ? t.id 
-        : (isInstallmentExpl || isCreditCard)
+        : (isInstallmentExpl)
           ? `${baseDesc}_${t.account}_${Math.abs(t.amount)}_${t.type}` 
           : t.id;
 
