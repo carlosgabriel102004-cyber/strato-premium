@@ -129,7 +129,12 @@ const App: React.FC = () => {
         const [day, month, year] = parts;
         return new Date(`${year}-${month}-${day}`).getTime();
       };
-      return parseDate(b.paymentDate || b.date) - parseDate(a.paymentDate || a.date);
+      
+      const dateDiff = parseDate(b.date) - parseDate(a.date);
+      if (dateDiff === 0) {
+        return (a.description || '').localeCompare(b.description || '');
+      }
+      return dateDiff;
     });
   }, [spreadsheetTransactions, manualTransactions]);
 
