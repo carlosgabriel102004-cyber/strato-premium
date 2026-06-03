@@ -127,12 +127,17 @@ const App: React.FC = () => {
     const groupedMap = new Map<string, Transaction & { groupedCount: number; originalAmount: number }>();
 
     rawCombined.forEach(t => {
-      const isInstallment = /\s*\(\d+\/\d+\)\s*$/.test(t.description);
+      const isInstallmentExpl = /\s*\(\d+\/\d+\)\s*$/.test(t.description);
+      const sourceIndicator = `${t.source} ${t.typeTag} ${t.account} ${t.manualSourceLabel}`.toLowerCase();
+      const isCreditCard = sourceIndicator.includes('cartão') || sourceIndicator.includes('cc');
+      
       const baseDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim().toLowerCase();
       
-      // Se não for parcela explícita (x/y), não agrupa
-      const groupKey = isInstallment 
-        ? `${baseDesc}_${t.account}_${t.type}` 
+      // Se tiver "(1/3)" explícito OU for do cartão de crédito (agrupa parcelas antigas sem selo e assinaturas pelo valor igual)
+      // Limitamos agrupar pelo valor também para não misturar compras diferentes no mesmo cartão com nomes iguais? 
+      // É mais seguro agrupar por valor também.
+      const groupKey = (isInstallmentExpl || isCreditCard)
+        ? `${baseDesc}_${t.account}_${Math.abs(t.amount)}_${t.type}` 
         : t.id;
 
       const parseDate = (d: string) => {
