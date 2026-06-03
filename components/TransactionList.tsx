@@ -24,10 +24,18 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, ignored
   const [filter, setFilter] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const filtered = transactions.filter(t => 
-    t.description.toLowerCase().includes(filter.toLowerCase()) ||
-    (t.category && t.category.toLowerCase().includes(filter.toLowerCase()))
-  );
+  const filtered = transactions.filter(t => {
+    const searchStr = filter.toLowerCase();
+    return (
+      (t.description && t.description.toLowerCase().includes(searchStr)) ||
+      (t.category && t.category.toLowerCase().includes(searchStr)) ||
+      (t.account && t.account.toLowerCase().includes(searchStr)) ||
+      (t.source && t.source.toLowerCase().includes(searchStr)) ||
+      (t.typeTag && t.typeTag.toLowerCase().includes(searchStr)) ||
+      (t.date && t.date.includes(searchStr)) ||
+      (t.amount && t.amount.toString().includes(searchStr))
+    );
+  });
 
   const formatCurrency = (val: number) => {
     const isNegative = val < 0;

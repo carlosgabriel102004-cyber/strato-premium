@@ -105,32 +105,33 @@ const App: React.FC = () => {
     let combined: Transaction[] = [];
     const seenTxs = new Set<string>();
     
-    // Sort selectedMonths ascending to always process older months first, 
-    // so the end chunks of newer months end up at the very bottom of the combined array.
-    const sortedMonths = [...selectedMonths].sort();
+    const allFetchedMonths = Array.from(new Set([
+       ...Object.keys(spreadsheetTransactions),
+       ...Object.keys(manualTransactions)
+    ]));
     
-    sortedMonths.forEach(mId => {
+    allFetchedMonths.forEach(mId => {
       const sheetTxs = spreadsheetTransactions[mId] || [];
       const manuals = manualTransactions[mId] || [];
-      const all = [...sheetTxs, ...manuals]; // Maintain order of append
+      const all = [...sheetTxs, ...manuals]; 
       all.forEach(t => {
         if (!seenTxs.has(t.id)) {
-           const dStr = t.paymentDate || t.date;
-           const parts = dStr.split('/');
-           if (parts.length >= 3) {
-             const m = `${parts[2]}-${parts[1]}`;
-             if (selectedMonths.includes(m)) {
-               seenTxs.add(t.id);
-               combined.push(t);
-             }
-           }
+           seenTxs.add(t.id);
+           combined.push(t);
         }
       });
     });
     
-    // Invert the array so the very last appended rows from the spreadsheet show first
-    return combined.reverse();
-  }, [spreadsheetTransactions, manualTransactions, selectedMonths]);
+    return combined.sort((a, b) => {
+      const parseDate = (d: string) => {
+        const parts = d.split('/');
+        if (parts.length < 3) return 0;
+        const [day, month, year] = parts;
+        return new Date(`${year}-${month}-${day}`).getTime();
+      };
+      return parseDate(b.paymentDate || b.date) - parseDate(a.paymentDate || a.date);
+    });
+  }, [spreadsheetTransactions, manualTransactions]);
 
   const activeTransactions = useMemo(() => {
     return allSelectedTransactions.filter(t => !ignoredIds.includes(t.id));
@@ -597,7 +598,7 @@ const App: React.FC = () => {
                     setEditingTransaction(tx);
                     setIsManualModalOpen(true);
                   }}
-                  title="Últimos Lançamentos (Final da Planilha)"
+                  title="Últimos Adicionados/Recentes"
                 />
               </div>
             ) : (
