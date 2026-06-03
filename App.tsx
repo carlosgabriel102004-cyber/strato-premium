@@ -117,25 +117,110 @@ const App: React.FC = () => {
       const manuals = manualTransactions[mId] || [];
       const all = [...sheetTxs, ...manuals]; 
       all.forEach(t => {
-        const dStr = t.paymentDate || t.date;
-        const logicalId = `${t.date}_${t.description}_${t.amount}_${t.account}_${dStr}`;
-        if (!seenTxs.has(logicalId)) {
-           seenTxs.add(logicalId);
-           rawCombined.push(t);
-        }
+        // Apenas agrupamos todos na lista bruta primeiro
+        rawCombined.push(t);
       });
     });
 
-    return rawCombined.sort((a, b) => {
-      const parseDate = (d: string) => {
+    const parseDate = (d: string) => {
+      const parts = d.split('/');
+      if (parts.length < 3) return 0;
+      const [day, month, year] = parts;
+      return new Date(`${year}-${month}-${day}`).getTime();
+    };
+
+    const getMonthStr = (d: string) => {
+      const parts = d.split('/');
+      if (parts.length >= 3) return `${parts[2]}-${parts[1]}`;
+      return '';
+    };
+
+    // Passo 1: Identificar grupos de parcelas através dos parênteses (x/y)
+    const installmentGroups = new Set<string>();
+    rawCombined.forEach(t => {
+        if (/\(\d+\/\d+\)/.test(t.description)) {
+            const baseDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim().toLowerCase();
+            installmentGroups.add(`${baseDesc}_${t.account?.toLowerCase()}`);
+        }
+    });
+
+    const finalCombined: Transaction[] = [];
+    const groupedInstallments = new Map<string, Transaction>();
+    const seenMonthsInGroup = new Map<string, Set<string>>();
+    // Para deduplicação global exata de linhas iguais
+    const globalSeen = new Set<string>();
+
+    rawCombined.forEach(t => {
+        const dStr = t.paymentDate || t.date;
+        const exactLogicId = `${t.date}_${t.description}_${t.amount}_${t.account}_${dStr}`;
+        
+        if (globalSeen.has(exactLogicId)) return;
+        globalSeen.add(exactLogicId);
+
+        const baseDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+        const baseDescLower = baseDesc.toLowerCase();
+        const groupKey = `${baseDescLower}_${t.account?.toLowerCase()}`;
+        
+        // Se a transação faz parte de uma compra parcelada, faremos o agrupamento
+        if (installmentGroups.has(groupKey)) {
+            const monthStr = getMonthStr(dStr); 
+            
+            if (!seenMonthsInGroup.has(groupKey)) {
+                seenMonthsInGroup.set(groupKey, new Set());
+            }
+            const monthsSet = seenMonthsInGroup.get(groupKey)!;
+            
+            if (groupedInstallments.has(groupKey)) {
+                 const existing = groupedInstallments.get(groupKey)!;
+                 
+                 // Se no mesmo mês já temos uma parcela registrada (pode ser o caso do fantasma com/sem parênteses da planilha do usuário), nós não somamos o valor, apenas ignoramos como duplicata.
+                 if (!monthsSet.has(monthStr)) {
+                     existing.amount += t.amount;
+                     monthsSet.add(monthStr);
+                 }
+                 
+                 const existingDate = parseDate(existing.date);
+                 const newDate = parseDate(t.date);
+                 
+                 // Garante que a data seja a da *primeira* parcela
+                 if (newDate > 0 && newDate < existingDate) {
+                     existing.date = t.date;
+                 }
+                 
+                 // Garante que o vencimento seja o da *primeira* parcela também
+                 if (t.paymentDate) {
+                    const existingPayDate = existing.paymentDate ? parseDate(existing.paymentDate) : 0;
+                    const newPayDate = parseDate(t.paymentDate);
+                    if (newPayDate > 0 && (existingPayDate === 0 || newPayDate < existingPayDate)) {
+                        existing.paymentDate = t.paymentDate;
+                    }
+                 }
+                 
+                 groupedInstallments.set(groupKey, existing);
+            } else {
+                 monthsSet.add(monthStr);
+                 const newDesc = `${baseDesc} (Parcelado)`;
+                 groupedInstallments.set(groupKey, { ...t, description: newDesc });
+            }
+        } else {
+            // Se não é parcela, vai reto pra lista final
+            finalCombined.push(t);
+        }
+    });
+
+    // Injeta os agrupamentos na visualização final
+    finalCombined.push(...Array.from(groupedInstallments.values()));
+
+    return finalCombined.sort((a, b) => {
+      const parseDateForSort = (d: string) => {
         const parts = d.split('/');
         if (parts.length < 3) return 0;
         const [day, month, year] = parts;
         return new Date(`${year}-${month}-${day}`).getTime();
       };
       
-      const dateA = parseDate(a.paymentDate || a.date);
-      const dateB = parseDate(b.paymentDate || b.date);
+      const dateA = parseDateForSort(a.paymentDate || a.date);
+      const dateB = parseDateForSort(b.paymentDate || b.date);
       const dateDiff = dateB - dateA;
 
       if (dateDiff === 0) {
