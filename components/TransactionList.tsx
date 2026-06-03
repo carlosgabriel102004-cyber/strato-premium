@@ -37,6 +37,8 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, ignored
     );
   });
 
+  const displayData = filtered.slice(0, 150);
+
   const formatCurrency = (val: number) => {
     const isNegative = val < 0;
     const formatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(val));
@@ -71,9 +73,9 @@ return (
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {filtered.length > 0 ? filtered.map((t, index) => {
+            {displayData.length > 0 ? displayData.map((t, index) => {
               const isIgnored = ignoredIds.includes(t.id);
-              const isLastRows = index >= filtered.length - 3 && filtered.length > 3;
+              const isLastRows = index >= displayData.length - 3 && displayData.length > 3;
 
               return (
                 <tr 

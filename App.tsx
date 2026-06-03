@@ -117,7 +117,8 @@ const App: React.FC = () => {
       const manuals = manualTransactions[mId] || [];
       const all = [...sheetTxs, ...manuals]; 
       all.forEach(t => {
-        const logicalId = `${t.date}_${t.description}_${t.amount}_${t.account}`;
+        const dStr = t.paymentDate || t.date;
+        const logicalId = `${t.date}_${t.description}_${t.amount}_${t.account}_${dStr}`;
         if (!seenTxs.has(logicalId)) {
            seenTxs.add(logicalId);
            rawCombined.push(t);
@@ -125,66 +126,7 @@ const App: React.FC = () => {
       });
     });
 
-    // Agrupamento de parcelas (para aparecerem juntas na data da compra e não poluir o topo com datas futuras)
-    const groupedMap = new Map<string, Transaction & { groupedCount: number; originalAmount: number }>();
-
-    rawCombined.forEach(t => {
-      const isInstallmentExpl = /\s*\(\d+\/\d+\)\s*$/.test(t.description);
-      const sourceIndicator = `${t.source} ${t.typeTag} ${t.account} ${t.manualSourceLabel}`.toLowerCase();
-      const isCreditCard = sourceIndicator.includes('cartão') || sourceIndicator.includes('cc');
-      
-      const baseDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim().toLowerCase();
-      
-      const groupKey = (t.typeTag === 'Assinatura') 
-        ? t.id 
-        : (isInstallmentExpl || isCreditCard)
-          ? `${baseDesc}_${t.account}_${Math.abs(t.amount)}` 
-          : t.id;
-
-      const parseDate = (d: string) => {
-        const parts = d.split('/');
-        if (parts.length < 3) return 0;
-        const [day, month, year] = parts;
-        return new Date(`${year}-${month}-${day}`).getTime();
-      };
-
-      const tTimestamp = parseDate(t.date);
-
-      if (groupedMap.has(groupKey)) {
-        const existing = groupedMap.get(groupKey)!;
-        const existingTimestamp = parseDate(existing.date);
-        
-        existing.amount += t.amount;
-        existing.groupedCount += 1;
-        
-        // Mantém a data mais antiga (que é a da compra)
-        if (tTimestamp < existingTimestamp) {
-          existing.date = t.date;
-          if (t.paymentDate) {
-             const existingPaymentTime = existing.paymentDate ? parseDate(existing.paymentDate) : existingTimestamp;
-             const newPaymentTime = parseDate(t.paymentDate);
-             if (newPaymentTime < existingPaymentTime) {
-                existing.paymentDate = t.paymentDate;
-             }
-          }
-          // Atualiza a descrição para pegar a primeira (ex: (1/3) ao invés de (3/3), ou limpar)
-          existing.description = t.description; 
-        }
-      } else {
-        groupedMap.set(groupKey, { ...t, groupedCount: 1, originalAmount: t.amount });
-      }
-    });
-
-    const combined = Array.from(groupedMap.values()).map(t => {
-      // Se agrupou mais de um, ajusta a descrição para indicar o total
-      if (t.groupedCount > 1) {
-         const cleanDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
-         return { ...t, description: `${cleanDesc} (${t.groupedCount} parcelas/vezes)` };
-      }
-      return t;
-    });
-    
-    return combined.sort((a, b) => {
+    return rawCombined.sort((a, b) => {
       const parseDate = (d: string) => {
         const parts = d.split('/');
         if (parts.length < 3) return 0;
@@ -192,7 +134,10 @@ const App: React.FC = () => {
         return new Date(`${year}-${month}-${day}`).getTime();
       };
       
-      const dateDiff = parseDate(b.date) - parseDate(a.date);
+      const dateA = parseDate(a.paymentDate || a.date);
+      const dateB = parseDate(b.paymentDate || b.date);
+      const dateDiff = dateB - dateA;
+
       if (dateDiff === 0) {
         return (a.description || '').localeCompare(b.description || '');
       }
@@ -658,7 +603,7 @@ const App: React.FC = () => {
             ) : activeTab === 'ultimos' ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <TransactionList 
-                  transactions={latestEntries.slice(0, 50)} 
+                  transactions={latestEntries} 
                   ignoredIds={ignoredIds}
                   onToggleIgnore={handleToggleIgnore}
                   onEdit={(tx) => {
