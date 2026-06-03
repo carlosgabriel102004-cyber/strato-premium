@@ -76,13 +76,14 @@ const App: React.FC = () => {
       const manuals = manualTransactions[mId] || [];
       const all = [...sheetTxs, ...manuals];
       all.forEach(t => {
-        if (!seenTxs.has(t.id)) {
+        const logicalId = t.source === 'manual' ? t.id : `${t.date}_${t.description}_${t.amount}_${t.account}`;
+        if (!seenTxs.has(logicalId)) {
            const dStr = t.paymentDate || t.date;
            const parts = dStr.split('/');
            if (parts.length >= 3) {
              const m = `${parts[2]}-${parts[1]}`;
              if (selectedMonths.includes(m)) {
-               seenTxs.add(t.id);
+               seenTxs.add(logicalId);
                combined.push(t);
              }
            }
@@ -116,8 +117,9 @@ const App: React.FC = () => {
       const manuals = manualTransactions[mId] || [];
       const all = [...sheetTxs, ...manuals]; 
       all.forEach(t => {
-        if (!seenTxs.has(t.id)) {
-           seenTxs.add(t.id);
+        const logicalId = t.source === 'manual' ? t.id : `${t.date}_${t.description}_${t.amount}_${t.account}`;
+        if (!seenTxs.has(logicalId)) {
+           seenTxs.add(logicalId);
            rawCombined.push(t);
         }
       });
@@ -133,12 +135,11 @@ const App: React.FC = () => {
       
       const baseDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim().toLowerCase();
       
-      // Se tiver "(1/3)" explícito OU for do cartão de crédito (agrupa parcelas antigas sem selo e assinaturas pelo valor igual)
-      // Limitamos agrupar pelo valor também para não misturar compras diferentes no mesmo cartão com nomes iguais? 
-      // É mais seguro agrupar por valor também.
-      const groupKey = (isInstallmentExpl || isCreditCard)
-        ? `${baseDesc}_${t.account}_${Math.abs(t.amount)}_${t.type}` 
-        : t.id;
+      const groupKey = (t.typeTag === 'Assinatura') 
+        ? t.id 
+        : (isInstallmentExpl || isCreditCard)
+          ? `${baseDesc}_${t.account}_${Math.abs(t.amount)}_${t.type}` 
+          : t.id;
 
       const parseDate = (d: string) => {
         const parts = d.split('/');
