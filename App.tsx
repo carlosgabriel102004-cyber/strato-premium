@@ -127,11 +127,13 @@ const App: React.FC = () => {
     const groupedMap = new Map<string, Transaction & { groupedCount: number; originalAmount: number }>();
 
     rawCombined.forEach(t => {
-      // Remove sufixos como (1/3), (2/12) para encontrar a compra base
+      const isInstallment = /\s*\(\d+\/\d+\)\s*$/.test(t.description);
       const baseDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim().toLowerCase();
-      // Chave de agrupamento: descrição base + conta + valor (usamos Math.abs para ignorar pequenas flutuações, mas string do valor é mais seguro)
-      // Como as vezes os valores variam 1 centavo, agruparemos por desc + account
-      const groupKey = `${baseDesc}_${t.account}_${t.type}`;
+      
+      // Se não for parcela explícita (x/y), não agrupa
+      const groupKey = isInstallment 
+        ? `${baseDesc}_${t.account}_${t.type}` 
+        : t.id;
 
       const parseDate = (d: string) => {
         const parts = d.split('/');
