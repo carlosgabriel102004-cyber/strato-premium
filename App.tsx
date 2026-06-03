@@ -102,9 +102,10 @@ const App: React.FC = () => {
   }, [spreadsheetTransactions, manualTransactions, selectedMonths]);
 
   const latestEntries = useMemo(() => {
-    let combined: Transaction[] = [];
+    let rawCombined: Transaction[] = [];
     const seenTxs = new Set<string>();
     
+    // Puxa de TODOS os meses para garantir a busca completa
     const allFetchedMonths = Array.from(new Set([
        ...Object.keys(spreadsheetTransactions),
        ...Object.keys(manualTransactions)
@@ -117,9 +118,62 @@ const App: React.FC = () => {
       all.forEach(t => {
         if (!seenTxs.has(t.id)) {
            seenTxs.add(t.id);
-           combined.push(t);
+           rawCombined.push(t);
         }
       });
+    });
+
+    // Agrupamento de parcelas (para aparecerem juntas na data da compra e não poluir o topo com datas futuras)
+    const groupedMap = new Map<string, Transaction & { groupedCount: number; originalAmount: number }>();
+
+    rawCombined.forEach(t => {
+      // Remove sufixos como (1/3), (2/12) para encontrar a compra base
+      const baseDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim().toLowerCase();
+      // Chave de agrupamento: descrição base + conta + valor (usamos Math.abs para ignorar pequenas flutuações, mas string do valor é mais seguro)
+      // Como as vezes os valores variam 1 centavo, agruparemos por desc + account
+      const groupKey = `${baseDesc}_${t.account}_${t.type}`;
+
+      const parseDate = (d: string) => {
+        const parts = d.split('/');
+        if (parts.length < 3) return 0;
+        const [day, month, year] = parts;
+        return new Date(`${year}-${month}-${day}`).getTime();
+      };
+
+      const tTimestamp = parseDate(t.date);
+
+      if (groupedMap.has(groupKey)) {
+        const existing = groupedMap.get(groupKey)!;
+        const existingTimestamp = parseDate(existing.date);
+        
+        existing.amount += t.amount;
+        existing.groupedCount += 1;
+        
+        // Mantém a data mais antiga (que é a da compra)
+        if (tTimestamp < existingTimestamp) {
+          existing.date = t.date;
+          if (t.paymentDate) {
+             const existingPaymentTime = existing.paymentDate ? parseDate(existing.paymentDate) : existingTimestamp;
+             const newPaymentTime = parseDate(t.paymentDate);
+             if (newPaymentTime < existingPaymentTime) {
+                existing.paymentDate = t.paymentDate;
+             }
+          }
+          // Atualiza a descrição para pegar a primeira (ex: (1/3) ao invés de (3/3), ou limpar)
+          existing.description = t.description; 
+        }
+      } else {
+        groupedMap.set(groupKey, { ...t, groupedCount: 1, originalAmount: t.amount });
+      }
+    });
+
+    const combined = Array.from(groupedMap.values()).map(t => {
+      // Se agrupou mais de um, ajusta a descrição para indicar o total
+      if (t.groupedCount > 1) {
+         const cleanDesc = t.description.replace(/\s*\(\d+\/\d+\)\s*$/, '').trim();
+         return { ...t, description: `${cleanDesc} (${t.groupedCount} parcelas/vezes)` };
+      }
+      return t;
     });
     
     return combined.sort((a, b) => {
