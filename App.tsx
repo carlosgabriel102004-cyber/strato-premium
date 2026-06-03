@@ -10,7 +10,7 @@ import SummaryCards from './components/SummaryCards';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.EMPTY);
-  const [activeTab, setActiveTab] = useState<'extrato' | 'graficos'>('extrato');
+  const [activeTab, setActiveTab] = useState<'extrato' | 'graficos' | 'ultimos'>('extrato');
   
   // 1. Persistência do Período Selecionado
   const [selectedMonths, setSelectedMonths] = useState<string[]>(() => {
@@ -99,6 +99,37 @@ const App: React.FC = () => {
       };
       return parseDate(b.paymentDate || b.date) - parseDate(a.paymentDate || a.date);
     });
+  }, [spreadsheetTransactions, manualTransactions, selectedMonths]);
+
+  const latestEntries = useMemo(() => {
+    let combined: Transaction[] = [];
+    const seenTxs = new Set<string>();
+    
+    // Sort selectedMonths ascending to always process older months first, 
+    // so the end chunks of newer months end up at the very bottom of the combined array.
+    const sortedMonths = [...selectedMonths].sort();
+    
+    sortedMonths.forEach(mId => {
+      const sheetTxs = spreadsheetTransactions[mId] || [];
+      const manuals = manualTransactions[mId] || [];
+      const all = [...sheetTxs, ...manuals]; // Maintain order of append
+      all.forEach(t => {
+        if (!seenTxs.has(t.id)) {
+           const dStr = t.paymentDate || t.date;
+           const parts = dStr.split('/');
+           if (parts.length >= 3) {
+             const m = `${parts[2]}-${parts[1]}`;
+             if (selectedMonths.includes(m)) {
+               seenTxs.add(t.id);
+               combined.push(t);
+             }
+           }
+        }
+      });
+    });
+    
+    // Invert the array so the very last appended rows from the spreadsheet show first
+    return combined.reverse();
   }, [spreadsheetTransactions, manualTransactions, selectedMonths]);
 
   const activeTransactions = useMemo(() => {
@@ -555,6 +586,19 @@ const App: React.FC = () => {
             {activeTab === 'graficos' ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <Dashboard transactions={activeTransactions} />
+              </div>
+            ) : activeTab === 'ultimos' ? (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <TransactionList 
+                  transactions={latestEntries.slice(0, 50)} 
+                  ignoredIds={ignoredIds}
+                  onToggleIgnore={handleToggleIgnore}
+                  onEdit={(tx) => {
+                    setEditingTransaction(tx);
+                    setIsManualModalOpen(true);
+                  }}
+                  title="Últimos Lançamentos (Final da Planilha)"
+                />
               </div>
             ) : (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">

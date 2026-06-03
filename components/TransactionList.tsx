@@ -7,6 +7,7 @@ interface TransactionListProps {
   ignoredIds: string[];
   onToggleIgnore: (id: string) => void;
   onEdit: (tx: Transaction) => void;
+  title?: string;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -19,7 +20,7 @@ const SOURCE_LABELS: Record<string, string> = {
   manual: 'Manual'
 };
 
-const TransactionList: React.FC<TransactionListProps> = ({ transactions, ignoredIds, onToggleIgnore, onEdit }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ transactions, ignoredIds, onToggleIgnore, onEdit, title = "Histórico de Lançamentos" }) => {
   const [filter, setFilter] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, ignored
 return (
     <div className="glass-card flex flex-col relative mb-4">
       <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-white">Histórico de Lançamentos</h3>
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
         <div className="relative">
           <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
           <input 
