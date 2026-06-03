@@ -137,8 +137,8 @@ const App: React.FC = () => {
       
       const groupKey = (t.typeTag === 'Assinatura') 
         ? t.id 
-        : (isInstallmentExpl)
-          ? `${baseDesc}_${t.account}_${Math.abs(t.amount)}_${t.type}` 
+        : (isInstallmentExpl || isCreditCard)
+          ? `${baseDesc}_${t.account}_${Math.abs(t.amount)}` 
           : t.id;
 
       const parseDate = (d: string) => {
