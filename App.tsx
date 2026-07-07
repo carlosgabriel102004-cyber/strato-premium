@@ -7,10 +7,11 @@ import TransactionList from './components/TransactionList';
 import SourceManager from './components/SourceManager';
 import ManualEntryModal from './components/ManualEntryModal';
 import SummaryCards from './components/SummaryCards';
+import BalancesDashboard from './components/BalancesDashboard';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.EMPTY);
-  const [activeTab, setActiveTab] = useState<'extrato' | 'graficos' | 'ultimos'>('extrato');
+  const [activeTab, setActiveTab] = useState<'extrato' | 'graficos' | 'ultimos' | 'saldos'>('extrato');
   
   // 1. Persistência do Período Selecionado
   const [selectedMonths, setSelectedMonths] = useState<string[]>(() => {
@@ -678,10 +679,14 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Cards de Resumo sempre visíveis */}
-            <SummaryCards stats={stats} />
+            {/* Cards de Resumo visíveis exceto em saldos */}
+            {activeTab !== 'saldos' && <SummaryCards stats={stats} />}
             
-            {activeTab === 'graficos' ? (
+            {activeTab === 'saldos' ? (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <BalancesDashboard />
+              </div>
+            ) : activeTab === 'graficos' ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <Dashboard transactions={activeTransactions} />
               </div>

@@ -8,8 +8,8 @@ interface HeaderProps {
   onOpenManual: () => void;
   isSyncing: boolean;
   onRefresh: () => void;
-  activeTab: 'extrato' | 'graficos' | 'ultimos';
-  onTabChange: (tab: 'extrato' | 'graficos' | 'ultimos') => void;
+  activeTab: 'extrato' | 'graficos' | 'ultimos' | 'saldos';
+  onTabChange: (tab: 'extrato' | 'graficos' | 'ultimos' | 'saldos') => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -85,6 +85,13 @@ const Header: React.FC<HeaderProps> = ({
               >
                 <i className="fas fa-history"></i>
                 <span className="hidden sm:inline">Últimos</span>
+              </button>
+              <button 
+                onClick={() => onTabChange('saldos')}
+                className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2 ${activeTab === 'saldos' ? 'bg-white/15 text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <i className="fas fa-wallet"></i>
+                <span className="hidden sm:inline">Saldos</span>
               </button>
             </div>
           </div>

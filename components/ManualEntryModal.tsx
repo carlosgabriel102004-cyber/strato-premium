@@ -25,11 +25,14 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ onClose, onAdd, edi
   });
 
   const accountOptions = Object.keys(accountToTypes);
+  if (!accountOptions.includes('Picpay PJ')) {
+      accountOptions.unshift('Picpay PJ');
+  }
   if (accountOptions.length === 0) {
       accountOptions.push('Nubank PF', 'Outros');
   }
 
-  const initialAccount = accountOptions.includes(editTransaction?.account || '') ? editTransaction!.account! : accountOptions[0];
+  const initialAccount = accountOptions.includes(editTransaction?.account || '') ? editTransaction!.account! : 'Picpay PJ';
   const [account, setAccount] = useState(initialAccount);
 
   let typeOptions = accountToTypes[account] ? Array.from(accountToTypes[account]) : [];
